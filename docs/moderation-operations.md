@@ -24,4 +24,7 @@ Admin moderation operations expose bounded, review-only workflows:
 Operations are persisted in `moderation_operations` and audit events record the
 actor, operation, scope, expiry, and aggregate outcome. Existing moderation
 decisions and report records remain unchanged by preview, evaluation, and
-clustering.
+clustering. Operation and audit rows remain available for operational
+traceability; this change adds no automatic retention cleanup. Previews expire
+after ten minutes, and grants expire within twelve hours, but their historical
+rows are retained.
