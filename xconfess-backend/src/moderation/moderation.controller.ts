@@ -27,6 +27,8 @@ import { AiModerationService, ModerationStatus } from './ai-moderation.service';
 import { ModerationRepositoryService } from './moderation-repository.service';
 import { InvalidModerationTransitionError } from './moderation-state-machine';
 import { TransitionModerationDto } from './dtos/transition-moderation.dto';
+import { ModerationOperationsService } from './moderation-operations.service';
+import { AuthenticatedRequest } from '../auth/interfaces/jwt-payload.interface';
 
 class TestModerationDto {
   content!: string;
@@ -40,6 +42,8 @@ class ReviewModerationDto {
 class UpdateThresholdsDto {
   highThreshold!: number;
   mediumThreshold!: number;
+  previewId!: string;
+  approved!: boolean;
 }
 
 @ApiTags('Admin - Moderation')
@@ -50,6 +54,7 @@ export class ModerationController {
   constructor(
     private readonly aiModerationService: AiModerationService,
     private readonly moderationRepoService: ModerationRepositoryService,
+    private readonly moderationOperationsService: ModerationOperationsService,
   ) {}
 
   @Get('pending')
@@ -114,14 +119,27 @@ export class ModerationController {
 
   @Post('config/thresholds')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update moderation thresholds (Admin only)' })
-  @ApiResponse({ status: 200, description: 'Thresholds updated.' })
-  updateThresholds(@Body() dto: UpdateThresholdsDto) {
-    this.aiModerationService.updateThresholds(
-      dto.highThreshold,
-      dto.mediumThreshold,
+  @ApiOperation({
+    summary: 'Apply a previewed moderation policy after explicit approval',
+  })
+  @ApiResponse({ status: 200, description: 'Approved thresholds applied.' })
+  async updateThresholds(
+    @Body() dto: UpdateThresholdsDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const result = await this.moderationOperationsService.applyPolicy(
+      String(req.user.id),
+      dto.previewId,
+      dto.approved,
+      {
+        highThreshold: dto.highThreshold,
+        mediumThreshold: dto.mediumThreshold,
+      },
     );
-    return { message: 'Thresholds updated successfully' };
+    return {
+      message: 'Approved thresholds applied successfully',
+      ...result,
+    };
   }
 
   @Post('test')

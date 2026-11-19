@@ -1,6 +1,7 @@
 'use client';
 
 import ReportList from '@/app/components/admin/ReportList';
+import ModerationOperationsPanel from '@/app/components/admin/ModerationOperationsPanel';
 
 export default function ReportsPage() {
   return (
@@ -11,6 +12,7 @@ export default function ReportsPage() {
           Reports
         </h1>
       </div>
+      <ModerationOperationsPanel />
       <ReportList />
     </div>
   );
